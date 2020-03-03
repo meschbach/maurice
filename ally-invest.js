@@ -1,5 +1,5 @@
 const {Readable} = require("stream");
-const allyInvestAPI = require("../../charltoons/node-ally-invest"); //FIXME: This points to a version with several things fixed
+const allyInvestAPI = require("maurice-ally-invest"); //FIXME: This points to a version with several things fixed
 
 const {nope} = require("junk-bucket");
 const {delay} = require("junk-bucket/future");
