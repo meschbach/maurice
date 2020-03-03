@@ -1,7 +1,12 @@
 FROM node:13
 
-COPY package.json package-lock.json /app
+RUN mkdir /app && chown -R node:node /app
+WORKDIR /app
+COPY package.json package-lock.json /app/
+USER node
 RUN npm install
 
-COPY *.js /app
+USER root
+COPY *.js /app/
+USER node
 CMD ["node","maurice.js"]
