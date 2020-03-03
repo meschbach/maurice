@@ -74,8 +74,8 @@ main(async (l) => {
 				lastReportedThreshold = threshold;
 				notifyTarget.notify(symbol + " starting threshold @ " + threshold.toFixed(3));
 			} else if( lastReportedThreshold > threshold) {
-				lastReportedThreshold = threshold;
 				notifyTarget.notify(symbol + " threshold @ " + threshold.toFixed(3) + " from " + lastReportedThreshold.toFixed(3));
+				lastReportedThreshold = threshold;
 			}
 		});
 		observer.on("outside", (quote, threshold) => {
