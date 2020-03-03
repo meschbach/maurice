@@ -1,5 +1,5 @@
 const {Readable} = require("stream");
-const allyInvestAPI = require("maurice-ally-invest"); //FIXME: This points to a version with several things fixed
+const {AllyInvestClient} = require("maurice-ally-invest"); //FIXME: This points to a version with several things fixed
 
 const {nope} = require("junk-bucket");
 const {delay} = require("junk-bucket/future");
@@ -44,7 +44,7 @@ async function createInputFactory(context, allyInvestConfig){
 		oauthToken: allyInvestConfig.oauth.token,
 		oauthTokenSecret: allyInvestConfig.oauth.secret,
 	};
-	const allyInvest = new allyInvestAPI(clientConfiguration);
+	const allyInvest = new AllyInvestClient(clientConfiguration);
 	allyInvest.setResponseType('json');
 
 	return {
