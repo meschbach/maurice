@@ -1,0 +1,50 @@
+{
+  "watch" : [
+    {
+      "type": "falling-trail",
+      "symbol" : "PCG200306C00017500",
+      "ticker-source" : "ally",
+      "notify": "slack",
+      "constThreshold" : 0.02
+    },
+    {
+      "type": "falling-trail",
+      "symbol" : "AMRN200306C00016000",
+      "ticker-source" : "ally",
+      "notify": "slack",
+      "constThreshold" : 0.02
+    },
+    {
+      "type": "falling-trail",
+      "symbol" : "WLL200313C00002000",
+      "ticker-source" : "ally",
+      "notify": "slack",
+      "constThreshold" : 0.02
+    }
+  ],
+  "outputs" : [
+    {
+      "name": "slack",
+      "module": "./slack-output",
+      "config": {
+        "webhook-url": "https://hooks.slack.com/services/EXAMPLE/WEBHOOK/URL"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "name": "ally",
+      "module": "./ally-invest",
+      "config":  {
+        "consumer" : {
+          "key" : "consume-key",
+          "secret" : "consumer-secret"
+        },
+        "oauth" : {
+          "token" : "oauth-token",
+          "secret" : "oauth-secret"
+        }
+      }
+    }
+  ]
+}

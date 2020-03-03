@@ -1,0 +1,30 @@
+{
+  "name": "maurice",
+  "version": "0.1.0",
+  "description": "A stock trading toolkit",
+  "main": "maurice.js",
+  "scripts": {
+    "test": "mocha *.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meschbach/maurice.git"
+  },
+  "keywords": [
+    "stock"
+  ],
+  "author": "Mark Eschbach <meschbach@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/meschbach/maurice/issues"
+  },
+  "homepage": "https://github.com/meschbach/maurice#readme",
+  "dependencies": {
+    "@slack/webhook": "5.0.2",
+    "junk-bucket": "1.4.1"
+  },
+  "devDependencies": {
+    "chai": "4.2.0",
+    "mocha": "7.1.0"
+  }
+}
