@@ -82,9 +82,20 @@ main(async (l) => {
 			notifyTarget.notify(symbol + " exceed threshold @ " + quote.last);
 			context.cleanup();
 		});
-		tickerSource.quoteStream(symbol).pipe(observer).on("error",(e) => {
+		const quoteStream  = tickerSource.quoteStream(symbol);
+		quoteStream.pipe(observer).on("error",(e) => {
 			context.logger.error("Pipeline error: ", e);
 			notifyTarget.notify("Encountered error: " + e.message);
 		});
+		context.onCleanup(() => {
+			quoteStream.destroy();
+			observer.end();
+		});
 	}
+
+	async function doCleanUp(){
+		await context.cleanup();
+	}
+	process.on("SIGINT", doCleanUp);
+	process.on("SIGTERM",  doCleanUp);
 }, new ConsoleLogger());
