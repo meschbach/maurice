@@ -1,8 +1,9 @@
 # Change Log
 
-## v0.2.0
+## v0.2.0 (in progress)
 
-Operational Readiness.  Major changes:
+Contuation after Treshold.  Major changes:
+* Continue processing threshold after one has changed.
 
 ## v0.1.0
 

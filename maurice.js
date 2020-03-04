@@ -80,7 +80,6 @@ main(async (l) => {
 		});
 		observer.on("outside", (quote, threshold) => {
 			notifyTarget.notify(symbol + " exceed threshold @ " + quote.last);
-			context.cleanup();
 		});
 		const quoteStream  = tickerSource.quoteStream(symbol);
 		quoteStream.pipe(observer).on("error",(e) => {
