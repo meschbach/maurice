@@ -2,3 +2,4 @@ node_modules/
 .travis.yaml
 .gitignore
 Dockerfile
+config.json
