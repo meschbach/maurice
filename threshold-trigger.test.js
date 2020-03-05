@@ -26,6 +26,19 @@ describe("Falling Threshold", function () {
 
 			expect(triggered).to.eq(31415);
 		});
+
+		describe("And the next values are between the initial threshold and new threshold", function () {
+			it("does not trigger again", function () {
+				let triggered = false;
+				const component = trackFallingThreshold(identity,identity);
+				component.onOutside = (v) => triggered = v;
+				component.next(42);
+				component.next(31415);
+				component.next(31414);
+
+				expect(triggered).to.eq(31415);
+			});
+		});
 	});
 
 	describe("When a threshold must be lower the the last sample", function () {
@@ -60,5 +73,4 @@ describe("Falling Threshold", function () {
 			expect(triggered).to.eq(16.08);
 		});
 	});
-
 });

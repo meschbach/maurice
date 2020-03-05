@@ -29,7 +29,9 @@ class FallingThreshold {
 					this.threshold = this.calcThreshold(value,record);
 					this.onInside(record, this.threshold);
 				} else if( value > this.threshold ){
-					this.onOutside(record, this.threshold);
+					const oldThreshold = this.threshold;
+					this.threshold = this.calcThreshold(value,record);
+					this.onOutside(record, oldThreshold);
 				}
 			}
 		};
@@ -45,12 +47,12 @@ class FallingTrailingObserver extends Writable {
 		super({
 			objectMode:true
 		});
-		this.threshold = new FallingThreshold((quote) => quote.last, (last) => last + constTolerance );
+		this.threshold = new FallingThreshold((quote) => quote.ask.price, (last) => last + constTolerance );
 		this.threshold.onInside = (quote, threshold) => {
 			this.emit("inside", quote, threshold);
 		};
-		this.threshold.onOutside = (quote) => {
-			this.emit("outside", quote);
+		this.threshold.onOutside = (quote, threshold) => {
+			this.emit("outside", quote, threshold);
 		};
 	}
 
