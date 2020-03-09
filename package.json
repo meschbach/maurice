@@ -24,12 +24,12 @@
     "junk-bucket": "1.4.1",
     "maurice-ally-invest": "0.1.1",
     "moment": "2.24.0",
+    "moment-timezone": "0.5.28",
     "nano": "8.2.2"
   },
   "devDependencies": {
     "chai": "4.2.0",
     "d3-node": "2.2.1",
-    "mocha": "7.1.0",
-    "moment-timezone": "0.5.28"
+    "mocha": "7.1.0"
   }
 }
