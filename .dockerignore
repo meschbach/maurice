@@ -3,3 +3,5 @@ node_modules/
 .gitignore
 Dockerfile
 config.json
+store-quotes.json
+watch-quotes.json
