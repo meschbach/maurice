@@ -10,34 +10,36 @@ const {AllyInvestClient} = require("maurice-ally-invest"); //FIXME: This points 
 const {nope} = require("junk-bucket");
 const {delay} = require("junk-bucket/future");
 
-class AllyTimedSymbolQuery extends Readable {  //TODO: This should feed from a reactor
-	constructor(client, symbol) {
+class AllyTimedSymbolQuery extends Readable {
+	constructor(reactor, symbol ) {
 		super({
 			objectMode: true
 		});
 		this.symbol = symbol;
-		this.client = client;
-		this.nextRead = 0;
+		this.reactor = reactor;
+		this._adapter = (q) => {
+			if( q.symbol === symbol ){
+				this.push(q);
+			}
+		};
+		this._registered = false;
 	}
 
 	_read(size) {
-		this._asyncRead(size).then(nope, (e) => this.emit("error", e));
+		if( this._registered ) {
+			return;
+		}
+		this._registered = true;
+
+		this.reactor.watch(this.symbol);
+		this.reactor.on("quote", this._adapter);
 	}
 
-	async _asyncRead( size ){
-		const timeToNextRead = this.nextRead - Date.now();
-		if( timeToNextRead > 0 ){
-			await delay(timeToNextRead);
-			return this._asyncRead(size);
-		}
+	_destroy(error, callback) {
+		if( !this._registered ){ return callback(); }
 
-		this.nextRead = Date.now() + 10 * 1000;
-		const responseEntity = await this.client.getMarketQuotesForSymbols({symbols:[this.symbol]});
-		if( responseEntity.response.error !== 'Success'){
-			throw new Error("Response error: " + responseEntity.error);
-		}
-		const quote = responseEntity.response.quotes.quote;
-		this.push(quote);
+		this.reactor.off("quote", this._adapter);
+		callback();
 	}
 }
 
@@ -110,6 +112,62 @@ class InternalizedQuote extends Transform {
 	}
 }
 
+const {EventEmitter} = require("events");
+class QuoteAggregator extends EventEmitter{
+	constructor(client, periodInSeconds) {
+		super();
+		this.client = client;
+		this.periodInSeconds = periodInSeconds;
+		this.watching = [];
+		this.running = false;
+	}
+
+	watch(symbol){
+		this.watching.push(symbol);
+		return this;
+	}
+
+	unwatch(symbol){
+		this.watching = this.watching.filter((s) => s != symbol);
+	}
+
+	start(){
+		if( this.running ) return;
+		this.running = true;
+
+		const doIntervalTick = () => {
+			if( !this.running ){
+				clearInterval(this.intervalToken);
+			}
+			if( this.watching.length == 0 ){
+				return;
+			}
+			this.client.getMarketQuotesForSymbols({symbols:this.watching}).then((responseEntity) => {
+				if( responseEntity.response.error !== 'Success'){
+					throw new Error("Response error: " + responseEntity.error);
+				}
+				const quote = responseEntity.response.quotes.quote;
+				if( quote.length ){
+					quote.forEach((q) => {
+						this.emit("quote", q);
+					});
+				} else {
+					this.emit("quote", quote);
+				}
+			});
+		};
+		const intervalToken = setInterval(doIntervalTick, this.periodInSeconds * 1000 );
+		this.intervalToken = intervalToken;
+		doIntervalTick();
+	}
+
+	stop() {
+		if( !this.running ){ return;}
+		this.running = false;
+		clearInterval(this.intervalToken);
+	}
+}
+
 async function createInputFactory(context, allyInvestConfig){
 	// Setup key/secret for authentication and API endpoint URL
 	const clientConfiguration = {
@@ -120,12 +178,15 @@ async function createInputFactory(context, allyInvestConfig){
 	};
 	const allyInvest = new AllyInvestClient(clientConfiguration);
 	allyInvest.setResponseType('json');
+	const aggregator = new QuoteAggregator(allyInvest, 5);
+	aggregator.start();
+	context.onCleanup(() => aggregator.stop());
 
 	return {
 		quoteStream: (context, symbol) => {
 			assert(context);
 			assert(symbol);
-			const generatingStream = new AllyTimedSymbolQuery(allyInvest, symbol);
+			const generatingStream = new AllyTimedSymbolQuery(aggregator, symbol);
 			context.onCleanup(() => generatingStream.destroy());
 			const internalizer = new InternalizedQuote();
 			generatingStream.pipe(internalizer);
@@ -148,5 +209,6 @@ async function createInputFactory(context, allyInvestConfig){
 }
 
 module.exports = {
-	createInputFactory
+	createInputFactory,
+	QuoteAggregator
 };
