@@ -3,40 +3,12 @@ const {Context} = require("junk-bucket/context");
 const {readFile} = require("junk-bucket/fs");
 
 const {FallingTrailingObserver} = require("./threshold-trigger");
-const {ConsoleLogger} = require("./junk");
+const {loadModule, service} = require("./junk");
 
-async function loadModule( context, contextName, moduleCache, moduleName, modelConfig, defaultInitName ){
-	if( moduleCache[moduleName] ){
-		return moduleCache[moduleName];
-	}
-
-	const matchingConfigs = modelConfig.filter((c) => c.name == moduleName );
-	if( matchingConfigs.length != 1 ) {
-		context.logger.error("Could not find output module", notifyName, modelConfig);
-		throw new Error("Expected an input by name of " + notifyName + ", got " + remaining.length);
-	}
-
-	const moduleDescriptor = matchingConfigs[0];
-	const loadedModule = require(moduleDescriptor.module);
-	const config = moduleDescriptor.config;
-
-	const moduleContext = context.subcontext(contextName);
-	const initFn = loadedModule[moduleDescriptor.initializer || defaultInitName];
-	if (!initFn) {
-		throw new Error("Module initializer is falsy for " + contextName);
-	}
-	const initializedModule = await initFn(moduleContext, config);
-	moduleCache[moduleName] = initializedModule;
-	return initializedModule;
-}
-
-main(async (l) => {
+service("Maurice", async (context) => {
 	// Report version
 	const pkg = require("./package");
-	l.info("Maurice", {version: pkg.version});
-
-	// Build process context
-	const context = new Context("Maurice", l);
+	context.logger.info("Maurice", {version: pkg.version});
 
 	// Figure out configuration file name
 	const actualArguments = process.argv.slice(2);
@@ -78,10 +50,10 @@ main(async (l) => {
 				lastReportedThreshold = threshold;
 			}
 		});
-		observer.on("outside", (quote, threshold) => {
-			notifyTarget.notify(symbol + " exceed threshold @ " + quote.last);
+		observer.on("outside", (quote, lastThreshold) => {
+			notifyTarget.notify(symbol + " exceed threshold @ " + quote.bid.price + " from " + lastThreshold.toFixed(3));
 		});
-		const quoteStream  = tickerSource.quoteStream(symbol);
+		const quoteStream  = tickerSource.quoteStream(context, symbol);
 		quoteStream.pipe(observer).on("error",(e) => {
 			context.logger.error("Pipeline error: ", e);
 			notifyTarget.notify("Encountered error: " + e.message);
@@ -91,10 +63,4 @@ main(async (l) => {
 			observer.end();
 		});
 	}
-
-	async function doCleanUp(){
-		await context.cleanup();
-	}
-	process.on("SIGINT", doCleanUp);
-	process.on("SIGTERM",  doCleanUp);
-}, new ConsoleLogger());
+});

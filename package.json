@@ -1,6 +1,6 @@
 {
   "name": "maurice",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A stock trading toolkit",
   "main": "maurice.js",
   "scripts": {
@@ -22,10 +22,15 @@
   "dependencies": {
     "@slack/webhook": "5.0.2",
     "junk-bucket": "1.4.1",
-    "maurice-ally-invest": "0.1.1"
+    "maurice-ally-invest": "0.1.1",
+    "moment": "^2.24.0",
+    "nano": "^8.2.2"
   },
   "devDependencies": {
     "chai": "4.2.0",
-    "mocha": "7.1.0"
+    "d3-node": "^2.2.1",
+    "mocha": "7.1.0",
+    "moment-timezone": "^0.5.28",
+    "yahoo-finance": "^0.3.6"
   }
 }
