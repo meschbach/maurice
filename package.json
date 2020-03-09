@@ -21,7 +21,7 @@
   "homepage": "https://github.com/meschbach/maurice#readme",
   "dependencies": {
     "@slack/webhook": "5.0.3",
-    "junk-bucket": "1.4.1",
+    "junk-bucket": "1.5.0",
     "maurice-ally-invest": "0.1.1",
     "moment": "2.24.0",
     "moment-timezone": "0.5.28",
