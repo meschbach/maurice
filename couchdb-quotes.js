@@ -1,21 +1,7 @@
 const {DeduplicateQuote} = require("./deduplicate-quote");
 
-const { AsyncSingleRead, AsyncWritable } = require("./junk");
-const {Service} = require("junk-bucket/couchdb");
+const {CouchWritable, Service} = require("junk-bucket/couchdb");
 const assert = require("assert");
-
-class CouchWritable extends AsyncWritable {
-	constructor(couchdb) {
-		super({
-			objectMode:true
-		});
-		this.couch = couchdb;
-	}
-
-	async _doWrite(record) {
-		await this.couch.insert(record);
-	}
-}
 
 async function connectAndUpgrade( context, config ){
 	// Build database URL
@@ -41,32 +27,6 @@ async function connectAndUpgrade( context, config ){
 	}
 
 	return couchDataStore;
-}
-
-class ReadCouchDocuments extends AsyncSingleRead {
-	constructor(client, set) {
-		super({
-			objectMode:true
-		});
-		this.client = client;
-		this.documentSet = set;
-		this.index = 0;
-	}
-
-	async _doRead(chunk) {
-		const index = this.index;
-		if( this.index >= this.documentSet.length ){
-			this.emit("end");
-			return;
-		}
-		this.index++;
-
-		const docID = this.documentSet[index];
-		const document =  await this.client.get_by_id(docID);
-		delete document["_id"];
-		delete document["_rev"];
-		return document;
-	}
 }
 
 async function dialTickerStore(context, config) {
@@ -101,16 +61,14 @@ async function createInputFactory(context, config){
 			assert(context);
 			assert(symbol);
 
-			const viewStream = await couchDataStore.client.view("r0", "bySymbolTime",{startkey: [symbol], endkey: [symbol,{}]});
-			return new ReadCouchDocuments(couchDataStore, viewStream.rows.map((r) => r.id));
+			return await couchDataStore.streamViewResults("r0", "bySymbolTime", {startkey: [symbol], endkey: [symbol,{}]});
 		},
 		history: {
 			forSymbol: async (symbol, startDate, endDate ) => {
 				const start = timeToUTC(startDate);
 				const end = timeToUTC(endDate);
 
-				const viewStream = await couchDataStore.client.view("r0", "bySymbolTime",{startkey: [symbol,start], endkey: [symbol,end]});
-				return new ReadCouchDocuments(couchDataStore, viewStream.rows.map((r) => r.id));
+				return await couchDataStore.streamViewResults("r0", "bySymbolTime",{startkey: [symbol,start], endkey: [symbol,end]});
 			}
 		}
 	};
