@@ -131,6 +131,21 @@ class QuoteAggregator extends EventEmitter{
 		this.watching = this.watching.filter((s) => s != symbol);
 	}
 
+	async _doTick(){
+		const responseEntity = await this.client.getMarketQuotesForSymbols({symbols:this.watching});
+		if( responseEntity.response.error !== 'Success'){
+			throw new Error("Response error: " + responseEntity.error);
+		}
+		const quote = responseEntity.response.quotes.quote;
+		if( quote.length ){
+			quote.forEach((q) => {
+				this.emit("quote", q);
+			});
+		} else {
+			this.emit("quote", quote);
+		}
+	}
+
 	start(){
 		if( this.running ) return;
 		this.running = true;
@@ -142,19 +157,7 @@ class QuoteAggregator extends EventEmitter{
 			if( this.watching.length == 0 ){
 				return;
 			}
-			this.client.getMarketQuotesForSymbols({symbols:this.watching}).then((responseEntity) => {
-				if( responseEntity.response.error !== 'Success'){
-					throw new Error("Response error: " + responseEntity.error);
-				}
-				const quote = responseEntity.response.quotes.quote;
-				if( quote.length ){
-					quote.forEach((q) => {
-						this.emit("quote", q);
-					});
-				} else {
-					this.emit("quote", quote);
-				}
-			});
+			this._doTick().then(nope, (e) => this.emit("error", e));
 		};
 		const intervalToken = setInterval(doIntervalTick, this.periodInSeconds * 1000 );
 		this.intervalToken = intervalToken;
@@ -180,6 +183,9 @@ async function createInputFactory(context, allyInvestConfig){
 	allyInvest.setResponseType('json');
 	const aggregator = new QuoteAggregator(allyInvest, 5);
 	aggregator.start();
+	aggregator.on("error", (e) => {
+		context.logger.error("Failed to request quotes: ", e);
+	});
 	context.onCleanup(() => aggregator.stop());
 
 	return {
