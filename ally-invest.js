@@ -182,6 +182,7 @@ async function createInputFactory(context, allyInvestConfig){
 	const allyInvest = new AllyInvestClient(clientConfiguration);
 	allyInvest.setResponseType('json');
 	const aggregator = new QuoteAggregator(allyInvest, 5);
+	aggregator.setMaxListeners(0); //The number of listeners is intentionally unbound.
 	aggregator.start();
 	aggregator.on("error", (e) => {
 		context.logger.error("Failed to request quotes: ", e);

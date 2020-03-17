@@ -30,6 +30,7 @@ service("historical-store",async (processContext) => {
 
 	// Create target stream
 	const output = await quoteStorage.newQuoteWritable();
+	output.setMaxListeners(0); //Waffling on disabling this (set to 0) or setting to the number of symbols we will watch
 
 	// Create a new ticker stream for each desired instrument
 	await parallel(watchConfig["symbols"].map(async (symbol) => {
